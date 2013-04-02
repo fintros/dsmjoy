@@ -48,11 +48,13 @@ enum
 
 typedef struct
 {
-	int16_t  channels[8]; 
+	int16_t  channels[8];
+	int8_t  buttons;
 } USB_JoystickReport_Data_t;
 
 
-extern USB_JoystickReport_Data_t JoystickReportData;
+extern int16_t rx_channels[16];
+extern int8_t rx_channels_changed;
 extern int8_t sat_is_connected;
 
 void HID_Task(void);

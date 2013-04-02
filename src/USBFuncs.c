@@ -25,6 +25,29 @@
 
 #include "DSMJoy.h"
 
+
+static USB_JoystickReport_Data_t JoystickReportData;
+
+static void UpdateReportData(void)
+{
+	if(rx_channels_changed)
+	{
+		for(int i = 0; i < 8; i++)
+			JoystickReportData.channels[i] = rx_channels[i] - CHANNEL_MAX/2;
+		
+		JoystickReportData.buttons = ((rx_channels[8]>(CHANNEL_MAX/2))?0x01: 0) |
+									 ((rx_channels[9]>(CHANNEL_MAX/2))?0x02: 0) |
+									 ((rx_channels[10]>(CHANNEL_MAX/2))?0x04: 0) |
+									 ((rx_channels[11]>(CHANNEL_MAX/2))?0x08: 0) |
+									 ((rx_channels[12]>(CHANNEL_MAX/2))?0x10: 0) |
+									 ((rx_channels[13]>(CHANNEL_MAX/2))?0x20: 0) |
+									 ((rx_channels[14]>(CHANNEL_MAX/2))?0x40: 0) |
+									 ((rx_channels[15]>(CHANNEL_MAX/2))?0x80: 0) 									 
+									 ;
+		rx_channels_changed = 0;					
+	}
+}
+
 typedef struct
 {
 	USB_Descriptor_Configuration_Header_t Config;
@@ -90,6 +113,7 @@ void EVENT_USB_Device_ControlRequest(void)
 			{
 				Endpoint_ClearSETUP();
 
+				UpdateReportData();
 				/* Write the report data to the control endpoint */
 				Endpoint_Write_Control_Stream_LE(&JoystickReportData, sizeof(JoystickReportData));
 				Endpoint_ClearOUT();
@@ -112,6 +136,7 @@ void HID_Task(void)
 	/* Check to see if the host is ready for another packet */
 	if (Endpoint_IsINReady())
 	{
+		UpdateReportData();
 		/* Write Joystick Report Data */
 		Endpoint_Write_Stream_LE(&JoystickReportData, sizeof(JoystickReportData), NULL);
 
@@ -150,6 +175,15 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] =
 	        HID_RI_REPORT_SIZE(8, 16),
 	        HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 	    HID_RI_END_COLLECTION(0),
+	    HID_RI_USAGE_PAGE(8, 0x09), /* Button */
+	    HID_RI_USAGE_MINIMUM(8, 0x01),
+	    HID_RI_USAGE_MAXIMUM(8, 0x02),
+	    HID_RI_LOGICAL_MINIMUM(8, 0x00),
+	    HID_RI_LOGICAL_MAXIMUM(8, 0x01),
+	    HID_RI_REPORT_SIZE(8, 0x01),
+	    HID_RI_REPORT_COUNT(8, 0x08),  /* 8 possible buttons */
+	    HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
+		
 	HID_RI_END_COLLECTION(0),
 };
 
@@ -171,7 +205,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
 	.VendorID               = 0x03EB,
 	.ProductID              = 0xDEF0,
-	.ReleaseNumber          = VERSION_BCD(00.03),
+	.ReleaseNumber          = VERSION_BCD(00.04),
 
 	.ManufacturerStrIndex   = 0x01,
 	.ProductStrIndex        = 0x02,

@@ -28,7 +28,8 @@
 
 // global variables
 int8_t sat_is_connected=0;
-USB_JoystickReport_Data_t JoystickReportData;
+int16_t rx_channels[16];
+int8_t rx_channels_changed=0;
 
 // local variables
 static int8_t byte_in_frame=0;  // byte number in frame
@@ -93,9 +94,10 @@ void Sat_Init(void)
 	byte_in_frame=0;
 	counter = 0;
 	sat_is_connected = 0;
+	rx_channels_changed = 1; // need to update at first time datat getting
 
     for(int i = 0; i<16; i++)
-       JoystickReportData.channels[i] = 0;    
+       rx_channels[i] = 0;    
 
 	// Serial processing 115200	
 	UBRR1H = 0;
@@ -135,9 +137,13 @@ ISR(USART1_RX_vect)
 	  counter = 0;
 	  if((byte_in_frame != 2) && (byte_in_frame != 18)) // skip first 2 bytes in frame - control sum + signal level
 	  {
-		int value = (((bytes[0]&0x3)<<8) | bytes[1]) - CHANNEL_MAX/2;
+		int value = (((bytes[0]&0x3)<<8) | bytes[1]);
 		int chanid = (bytes[0] >>2) & 0x0F;
-		JoystickReportData.channels[chanid] = value;
+		if(rx_channels[chanid] != value)
+		{
+			rx_channels_changed = 1;
+			rx_channels[chanid] = value;
+		}
 	  }
 	} 
 }
