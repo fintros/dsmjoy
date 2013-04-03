@@ -94,14 +94,16 @@ void Sat_Init(void)
 	byte_in_frame=0;
 	counter = 0;
 	sat_is_connected = 0;
-	rx_channels_changed = 1; // need to update at first time datat getting
+	rx_channels_changed = 1; // need to update at first time data getting
 
     for(int i = 0; i<16; i++)
        rx_channels[i] = 0;    
 
+	   
 	// Serial processing 115200	
+	UCSR1A |= (1 << U2X1);
 	UBRR1H = 0;
-	UBRR1L = 8; 
+	UBRR1L = 16; 
 
 	// enable RX and set interrupts on rx complete
 	UCSR1B = (1 << RXEN1) | (1 << RXCIE1);

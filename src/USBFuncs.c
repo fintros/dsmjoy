@@ -304,14 +304,20 @@ const USB_Descriptor_String_t PROGMEM ProductString =
 {
 	.Header                 = {.Size = USB_STRING_LEN(22), .Type = DTYPE_String},
 
-	.UnicodeString          = L"DSM Satellite joystick"
+	.UnicodeString          = L"DSM Satellite Joystick"
 };
 
 const USB_Descriptor_String_t PROGMEM SNString =
 {
-	.Header                 = {.Size = USB_STRING_LEN(11), .Type = DTYPE_String},
+#ifdef _SN
+	.Header                 = {.Size = USB_STRING_LEN(sizeof(_SN)/2), .Type = DTYPE_String},
 
 	.UnicodeString          = _SN
+#else
+	.Header                 = {.Size = USB_STRING_LEN(6), .Type = DTYPE_String},
+
+	.UnicodeString          = L"SN----"
+#endif	
 };
 
 
